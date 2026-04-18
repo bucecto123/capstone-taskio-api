@@ -2,6 +2,7 @@ import express from 'express'
 import { boardValidation } from '~/validations/board.validation'
 import { authMiddleware } from '~/middlewares/auth.middleware'
 import BoardController from '~/controllers/board.controller'
+import AIController from '~/controllers/ai.controller'
 import asyncHandler from '~/helpers/asyncHandler'
 import validate from '~/utils/validate'
 import { createIdParamSchema } from '~/validations/common.validation'
@@ -32,6 +33,14 @@ Router.route('/').post(
     workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.BOARD_CREATE)
   ),
   asyncHandler(BoardController.create)
+)
+
+Router.route('/ai-generate').post(
+  asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(
+    workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.BOARD_CREATE)
+  ),
+  asyncHandler(AIController.generateBoard)
 )
 
 Router.route('/permissions').get(
