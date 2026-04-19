@@ -30,6 +30,7 @@ export const env = {
   REDIS_HOST: process.env.REDIS_HOST,
   REDIS_PORT: process.env.REDIS_PORT,
   REDIS_PASSWORD: process.env.REDIS_PASSWORD,
+  REDIS_TLS: process.env.REDIS_TLS,
 
   // S3 credential
   AWS_USER_ACCESS_KEY: process.env.AWS_USER_ACCESS_KEY,
