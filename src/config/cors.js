@@ -5,13 +5,16 @@ import { ForbiddenErrorResponse } from '~/core/error.response'
 // Cấu hình CORS Option trong dự án thực tế (Video số 62 trong chuỗi MERN Stack Pro)
 export const corsOptions = {
   origin: function (origin, callback) {
+    // Same-origin requests không có Origin header (browser không gửi)
+    // Ví dụ: frontend và API cùng domain qua CloudFront path-based routing
+    if (!origin) {
+      return callback(null, true)
+    }
+
     // Nếu môi trường là local dev thì cho qua luôn
     if (env.BUILD_MODE === 'dev') {
       return callback(null, true)
     }
-
-    // Ngược lại thì hiện tại code chúng ta đang làm còn 1 trường hợp là:
-    // env.BUILD_MODE === 'production'
 
     // Kiểm tra xem origin có phải là domain được chấp nhận hay không
     if (WHITELIST_DOMAINS.includes(origin)) {
