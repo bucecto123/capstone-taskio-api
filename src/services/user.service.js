@@ -16,6 +16,16 @@ import WorkspaceService from './workspace.service'
 import { mongoClientInstance } from '~/config/mongodb'
 import { ObjectId } from 'mongodb'
 
+function parseTtlSeconds(ttl) {
+  if (!ttl) return 900
+  const m = String(ttl).match(/^(\d+)([smhd])?$/)
+  if (!m) return 900
+  const n = parseInt(m[1], 10)
+  const unit = m[2] || 's'
+  const multiplier = { s: 1, m: 60, h: 3600, d: 86400 }[unit] || 1
+  return n * multiplier
+}
+
 class UserService {
   static fetchByUser = async ({ data }) => {
     const keyword = data?.search?.trim() || ''
@@ -162,6 +172,16 @@ class UserService {
     )
 
     return { accessToken }
+  }
+
+  static issueAiToken = async ({ _id, email }) => {
+    const userInfo = { _id: String(_id), email }
+    const token = await JwtProvider.generateToken(
+      userInfo,
+      env.ACCESS_TOKEN_SECRET_SIGNATURE,
+      env.AI_TOKEN_LIFE
+    )
+    return { token, expiresIn: parseTtlSeconds(env.AI_TOKEN_LIFE) }
   }
 
   static update = async ({ _id, data, userAvatarFile }) => {

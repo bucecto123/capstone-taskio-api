@@ -73,6 +73,15 @@ class UserController {
     res.status(StatusCodes.OK).json({ result })
   }
 
+  static issueAiToken = async (req, res) => {
+    const { _id, email } = req.userContext
+    const result = await UserService.issueAiToken({ _id, email })
+    new OkSuccessResponse({
+      message: 'AI token issued',
+      metadata: result
+    }).send(res)
+  }
+
   static update = async (req, res) => {
     new OkSuccessResponse({
       message: 'User updated successfully!',

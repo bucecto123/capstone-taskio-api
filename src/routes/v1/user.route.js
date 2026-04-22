@@ -27,6 +27,11 @@ Router.route('/logout').delete(asyncHandler(UserController.logout))
 
 Router.route('/refresh_token').put(asyncHandler(UserController.refreshToken))
 
+Router.route('/ai-token').post(
+  asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(UserController.issueAiToken)
+)
+
 Router.route('/update').put(
   asyncHandler(authMiddleware.isAuthorized),
   // asyncHandler(multerUploadMiddleware.uploadSingleImage.single('avatar')),
