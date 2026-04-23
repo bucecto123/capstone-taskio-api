@@ -81,8 +81,15 @@ const START_SERVER = () => {
     console.log('1. Connecting to MongoDB Cloud Atlas...')
     await CONNECT_DB()
     console.log('2. Connected to MongoDB Cloud Atlas!')
-    await CONNECT_REDIS()
-    console.log('3. Connected Redis successfully!')
+    try {
+      await Promise.race([
+        CONNECT_REDIS(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Redis connect timeout')), 3000))
+      ])
+      console.log('3. Connected Redis successfully!')
+    } catch (redisErr) {
+      console.warn('3. Redis unavailable (local dev without cache):', redisErr.message)
+    }
 
     // Khởi động Server Back-end sau khi đã Connect Database thành công
     START_SERVER()

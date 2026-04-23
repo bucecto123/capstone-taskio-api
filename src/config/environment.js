@@ -40,8 +40,9 @@ export const env = {
   AWS_S3_BUCKET: process.env.AWS_S3_BUCKET,
   AWS_CLOUDFRONT_DOMAIN: process.env.AWS_CLOUDFRONT_DOMAIN,
 
-  // Bedrock AI
-  BEDROCK_AWS_ACCESS_KEY_ID: process.env.BEDROCK_AWS_ACCESS_KEY_ID,
-  BEDROCK_AWS_SECRET_ACCESS_KEY: process.env.BEDROCK_AWS_SECRET_ACCESS_KEY,
-  BEDROCK_REGION: process.env.BEDROCK_REGION || 'us-east-1'
+  // Bedrock AI — dùng EC2 instance profile, không cần access key.
+  // Local dev muốn test: aws configure hoặc set AWS_PROFILE với credential
+  // có quyền bedrock:InvokeModel.
+  BEDROCK_REGION: process.env.BEDROCK_REGION || 'us-east-1',
+  BEDROCK_MODEL_ID: process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-haiku-4-5-20251001-v1:0'
 }
