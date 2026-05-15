@@ -16,6 +16,8 @@ const BACKGROUND_COLLECTION_SCHEMA = Joi.object({
     .valid(...BACKGROUND_STATUS)
     .default('active'),
 
+  isDelete: Joi.boolean().default(false),
+
   createdAt: Joi.date().default(() => new Date()),
   updatedAt: Joi.date().allow(null).default(null)
 })

@@ -3,11 +3,11 @@ import { cardValidation } from '~/validations/card.validation'
 import { authMiddleware } from '~/middlewares/auth.middleware'
 import asyncHandler from '~/helpers/asyncHandler'
 import CardController from '~/controllers/card.controller'
-import AIController from '~/controllers/ai.controller'
 import validate from '~/utils/validate'
 import { boardMiddleware } from '~/middlewares/boardPermission.middleware'
 import { BOARD_PERMISSIONS } from '~/constant/boardPermission.constant'
 import { createIdParamSchema } from '~/validations/common.validation'
+import AIController from '~/controllers/ai.controller'
 
 const Router = express.Router()
 Router.use(asyncHandler(authMiddleware.isAuthorized))
@@ -112,23 +112,21 @@ Router.route('/:boardId/:cardId')
     asyncHandler(CardController.delete)
   )
 
-Router.route('/ai-assist/:boardId/:cardId')
-  .post(
-    asyncHandler(
-      validate(cardValidation.updateAndDeleteCardParamSchema, 'params')
-    ),
-    asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.CARD_UPDATE)),
-    asyncHandler(AIController.generateCardAssist)
-  )
+Router.route('/ai-assist/:boardId/:cardId').post(
+  asyncHandler(
+    validate(cardValidation.updateAndDeleteCardParamSchema, 'params')
+  ),
+  asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.CARD_UPDATE)),
+  asyncHandler(AIController.generateCardAssist)
+)
 
-Router.route('/ai-assist/:boardId/:cardId/apply')
-  .post(
-    asyncHandler(
-      validate(cardValidation.updateAndDeleteCardParamSchema, 'params')
-    ),
-    asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.CARD_UPDATE)),
-    asyncHandler(AIController.applyCardAssist)
-  )
+Router.route('/ai-assist/:boardId/:cardId/apply').post(
+  asyncHandler(
+    validate(cardValidation.updateAndDeleteCardParamSchema, 'params')
+  ),
+  asyncHandler(boardMiddleware.checkPermission(BOARD_PERMISSIONS.CARD_UPDATE)),
+  asyncHandler(AIController.applyCardAssist)
+)
 
 Router.route('/:_id').get(asyncHandler(CardController.fetchDetail))
 

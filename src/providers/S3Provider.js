@@ -11,11 +11,7 @@ import path from 'path'
 import { env } from '~/config/environment'
 class S3Provider {
   static client = new S3Client({
-    region: env.AWS_REGION,
-    credentials: {
-      accessKeyId: env.AWS_USER_ACCESS_KEY,
-      secretAccessKey: env.AWS_USER_SECRET_ACCESS_KEY
-    }
+    region: env.AWS_REGION
   })
 
   static bucket = env.AWS_S3_BUCKET

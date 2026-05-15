@@ -49,112 +49,86 @@ class BoardRepo {
       }
     ]
 
-    // xử lí query cho từng trường hợp search board , ví dụ search title...
     if (q) {
       Object.keys(q).forEach((key) => {
-        // queryFilters[key] ví dụ queryFilters[title] nếu phía FE đẩy lên q[title]
-
-        // Có phân biệt chữ hoa chữ thường
-        // queryConditions.push({ [key]: { $regex: queryFilters[key] } })
-
-        // Không phân biệt chữ hoa chữ thường
         queryConditions.push({
           [key]: { $regex: new RegExp(q[key], 'i') }
         })
       })
     }
 
-    const query = await GET_DB()
-      .collection(boardModel.BOARD_COLLECTION_NAME)
-      .aggregate(
-        [
-          {
-            $match: { $and: queryConditions }
-          },
-          // sort title của board theo A-Z (mặc định sẽ bị chữ B hoa đứng trước chữ a thường (theo chuẩn bảng mã ASCII)
-          { $sort: { title: 1 } },
-          // $facet để xử lý nhiều luồng trong một query
-          {
-            $facet: {
-              // Luồng 01: Query boards
-              queryBoards: [
-                { $skip: pagingSkipValue(page, itemsPerPage) },
-                { $limit: itemsPerPage }
-              ],
-              // Luồng 02: Query đếm tổng tất cả số lượng bản ghi boards trong DB và trả về vào biến: countedAllBoards
-              queryTotalBoards: [{ $count: 'countedAllBoards' }]
-            }
-          }
-        ],
-        { collation: { locale: 'en' } }
-      )
-      .toArray()
-    const res = query[0]
+    const collection = GET_DB().collection(boardModel.BOARD_COLLECTION_NAME)
+    const matchQuery = { $and: queryConditions }
+    const collation = { locale: 'en' }
+
+    const [boards, totalBoards] = await Promise.all([
+      collection
+        .aggregate(
+          [
+            { $match: matchQuery },
+            { $sort: { title: 1 } },
+            { $skip: pagingSkipValue(page, itemsPerPage) },
+            { $limit: itemsPerPage }
+          ],
+          { collation }
+        )
+        .toArray(),
+
+      collection.countDocuments(matchQuery, { collation })
+    ])
+
     return {
-      boards: res.queryBoards || [],
-      totalBoards: res.queryTotalBoards[0]?.countedAllBoards || 0
+      boards,
+      totalBoards
     }
   }
 
   static getDetail = async ({ _id }) => {
     try {
-      const [board] = await GET_DB()
-        .collection(boardModel.BOARD_COLLECTION_NAME)
-        .aggregate([
-          { $match: { _id: new ObjectId(_id) } },
+      const db = GET_DB()
+      const boardObjectId = new ObjectId(_id)
+      const boardIdStr = _id
 
-          {
-            $lookup: {
-              from: columnModel.COLUMN_COLLECTION_NAME,
-              let: { boardIdStr: { $toString: '$_id' } },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: {
-                      $and: [
-                        { $eq: [{ $toString: '$boardId' }, '$$boardIdStr'] },
-                        { $eq: ['$status', 'active'] }
-                      ]
-                    }
-                  }
-                }
-              ],
-              as: 'columns'
+      const [board, columns, cards] = await Promise.all([
+        db.collection(boardModel.BOARD_COLLECTION_NAME).findOne({
+          _id: boardObjectId
+        }),
+
+        db
+          .collection(columnModel.COLUMN_COLLECTION_NAME)
+          .find({
+            boardId: boardIdStr,
+            status: 'active'
+          })
+          .toArray(),
+
+        db
+          .collection(cardModel.CARD_COLLECTION_NAME)
+          .find(
+            {
+              boardId: boardIdStr,
+              status: 'active'
+            },
+            {
+              projection: {
+                status: 0,
+                description: 0,
+                createdAt: 0,
+                updatedAt: 0,
+                archivedAt: 0
+              }
             }
-          },
+          )
+          .toArray()
+      ])
 
-          {
-            $lookup: {
-              from: cardModel.CARD_COLLECTION_NAME,
-              let: { boardIdStr: { $toString: '$_id' } },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: {
-                      $and: [
-                        { $eq: [{ $toString: '$boardId' }, '$$boardIdStr'] },
-                        { $eq: ['$status', 'active'] }
-                      ]
-                    }
-                  }
-                },
-                {
-                  $project: {
-                    status: 0,
-                    description: 0,
-                    createdAt: 0,
-                    updatedAt: 0,
-                    archivedAt: 0
-                  }
-                }
-              ],
-              as: 'cards'
-            }
-          }
-        ])
-        .toArray()
+      if (!board) return null
 
-      return board || null
+      return {
+        ...board,
+        columns,
+        cards
+      }
     } catch (error) {
       throw error
     }

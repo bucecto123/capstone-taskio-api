@@ -24,7 +24,9 @@ const AI_OUTPUT_SCHEMA = Joi.object({
   subtasks: Joi.array().items(Joi.string().max(200)).min(1).max(10).required()
 })
 
-const buildPrompt = (title) => `You are a task management assistant. Given a card title, generate a description and subtasks.
+const buildPrompt = (
+  title
+) => `You are a task management assistant. Given a card title, generate a description and subtasks.
 
 Rules:
 - description: 1-3 sentences, max 2000 characters, in the same language as the title
@@ -64,7 +66,9 @@ class AIService {
       rawResponse = await invokeModel({ prompt })
     } catch (bedrockError) {
       console.error('Bedrock error:', bedrockError?.name, bedrockError?.message)
-      throw new BadRequestErrorResponse(`AI service error: ${bedrockError?.message || 'Unknown'}`)
+      throw new BadRequestErrorResponse(
+        `AI service error: ${bedrockError?.message || 'Unknown'}`
+      )
     }
 
     let parsed
@@ -72,12 +76,20 @@ class AIService {
       const jsonMatch = rawResponse.match(/\{[\s\S]*\}/)
       parsed = JSON.parse(jsonMatch[0])
     } catch {
-      throw new BadRequestErrorResponse('AI returned invalid format. Please try again.')
+      throw new BadRequestErrorResponse(
+        'AI returned invalid format. Please try again.'
+      )
     }
 
-    const validated = await AI_OUTPUT_SCHEMA.validateAsync(parsed, { abortEarly: false })
+    const validated = await AI_OUTPUT_SCHEMA.validateAsync(parsed, {
+      abortEarly: false
+    })
 
-    await setCache({ key: cacheKey, value: validated, ttlInSeconds: AI_CACHE_TTL })
+    await setCache({
+      key: cacheKey,
+      value: validated,
+      ttlInSeconds: AI_CACHE_TTL
+    })
 
     return { ...validated, fromCache: false }
   }
@@ -209,7 +221,9 @@ Project description: "${prompt}"`
       rawResponse = await invokeModel({ prompt: boardPrompt, maxTokens: 2048 })
     } catch (bedrockError) {
       console.error('Bedrock error:', bedrockError?.name, bedrockError?.message)
-      throw new BadRequestErrorResponse(`AI service error: ${bedrockError?.message || 'Unknown'}`)
+      throw new BadRequestErrorResponse(
+        `AI service error: ${bedrockError?.message || 'Unknown'}`
+      )
     }
 
     let parsed
@@ -217,25 +231,35 @@ Project description: "${prompt}"`
       const jsonMatch = rawResponse.match(/\{[\s\S]*\}/)
       parsed = JSON.parse(jsonMatch[0])
     } catch {
-      throw new BadRequestErrorResponse('AI returned invalid format. Please try again.')
+      throw new BadRequestErrorResponse(
+        'AI returned invalid format. Please try again.'
+      )
     }
 
     const BOARD_OUTPUT_SCHEMA = Joi.object({
       boardTitle: Joi.string().max(200).required(),
-      columns: Joi.array().items(
-        Joi.object({
-          title: Joi.string().max(500).required(),
-          cards: Joi.array().items(
-            Joi.object({
-              title: Joi.string().max(500).required(),
-              description: Joi.string().max(2000).allow('').default('')
-            })
-          ).default([])
-        })
-      ).min(1).max(10).required()
+      columns: Joi.array()
+        .items(
+          Joi.object({
+            title: Joi.string().max(500).required(),
+            cards: Joi.array()
+              .items(
+                Joi.object({
+                  title: Joi.string().max(500).required(),
+                  description: Joi.string().max(2000).allow('').default('')
+                })
+              )
+              .default([])
+          })
+        )
+        .min(1)
+        .max(10)
+        .required()
     })
 
-    const validated = await BOARD_OUTPUT_SCHEMA.validateAsync(parsed, { abortEarly: false })
+    const validated = await BOARD_OUTPUT_SCHEMA.validateAsync(parsed, {
+      abortEarly: false
+    })
 
     // Create board with full setup in a transaction
     const workspaceId = workspaceAccess.workspace._id.toString()
@@ -255,7 +279,10 @@ Project description: "${prompt}"`
           createdBy: userContext._id
         }
 
-        const createdBoard = await BoardRepo.createOne({ data: boardData, session })
+        const createdBoard = await BoardRepo.createOne({
+          data: boardData,
+          session
+        })
         boardId = createdBoard.insertedId
 
         // 2. Create roles
@@ -266,16 +293,40 @@ Project description: "${prompt}"`
             isDefault: true,
             key: 'board_admin',
             permissionCodes: [
-              'board.view', 'board.update', 'board.delete',
-              'board.member.invite', 'board.member.remove', 'board.member.changeRole',
-              'board.role.create', 'board.role.update', 'board.role.delete',
-              'board.label.create', 'board.label.update', 'board.label.delete',
-              'board.column.create', 'board.column.update', 'board.column.archive', 'board.column.restore', 'board.column.delete',
-              'board.card.create', 'board.card.update', 'board.card.delete', 'board.card.move', 'board.card.archive', 'board.card.restore',
-              'board.card.member.assign', 'board.card.member.remove',
-              'board.card.comment.create', 'board.card.comment.delete',
-              'board.card.attachment.create', 'board.card.attachment.delete', 'board.card.attachment.rename', 'board.card.attachment.download',
-              'board.card.task.create', 'board.card.task.update', 'board.card.task.delete'
+              'board.view',
+              'board.update',
+              'board.delete',
+              'board.member.invite',
+              'board.member.remove',
+              'board.member.changeRole',
+              'board.role.create',
+              'board.role.update',
+              'board.role.delete',
+              'board.label.create',
+              'board.label.update',
+              'board.label.delete',
+              'board.column.create',
+              'board.column.update',
+              'board.column.archive',
+              'board.column.restore',
+              'board.column.delete',
+              'board.card.create',
+              'board.card.update',
+              'board.card.delete',
+              'board.card.move',
+              'board.card.archive',
+              'board.card.restore',
+              'board.card.member.assign',
+              'board.card.member.remove',
+              'board.card.comment.create',
+              'board.card.comment.delete',
+              'board.card.attachment.create',
+              'board.card.attachment.delete',
+              'board.card.attachment.rename',
+              'board.card.attachment.download',
+              'board.card.task.create',
+              'board.card.task.update',
+              'board.card.task.delete'
             ]
           },
           session
@@ -314,7 +365,11 @@ Project description: "${prompt}"`
           { title: '', color: 'red' },
           { title: '', color: 'purple' },
           { title: '', color: 'blue' }
-        ].map(l => ({ ...l, boardId: boardId.toString(), createdBy: createdMember.insertedId.toString() }))
+        ].map((l) => ({
+          ...l,
+          boardId: boardId.toString(),
+          createdBy: createdMember.insertedId.toString()
+        }))
 
         await LabelRepo.createMany({ data: defaultLabels, session })
 
@@ -379,7 +434,9 @@ Project description: "${prompt}"`
         })
       })
 
-      const newBoard = await BoardRepo.findOne({ filter: { _id: new ObjectId(boardId) } })
+      const newBoard = await BoardRepo.findOne({
+        filter: { _id: new ObjectId(boardId) }
+      })
       return newBoard
     } finally {
       await session.endSession()

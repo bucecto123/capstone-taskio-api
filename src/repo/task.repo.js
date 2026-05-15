@@ -3,38 +3,50 @@ import { taskModel } from '~/models/task.model'
 
 class TaskRepo {
   static getListByCardId = async ({ cardId, options = {} }) => {
+    const db = GET_DB()
     const rootSort = options.sort || { createdAt: 1 }
     const childSort = options.childSort || { createdAt: 1 }
 
-    return await GET_DB()
+    // 1. root tasks
+    const rootTasks = await db
       .collection(taskModel.TASK_COLLECTION_NAME)
-      .aggregate([
-        { $match: { cardId, parentTaskId: null } },
-
-        {
-          $lookup: {
-            from: taskModel.TASK_COLLECTION_NAME,
-            let: { parentTaskIdStr: { $toString: '$_id' } },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ['$parentTaskId', '$$parentTaskIdStr'] },
-                      { $eq: ['$cardId', cardId] }
-                    ]
-                  }
-                }
-              },
-              { $sort: childSort }
-            ],
-            as: 'childTasks'
-          }
-        },
-
-        { $sort: rootSort }
-      ])
+      .find({
+        cardId,
+        parentTaskId: null
+      })
+      .sort(rootSort)
       .toArray()
+
+    if (!rootTasks.length) return []
+
+    // 2. lấy tất cả child tasks
+    const parentIds = rootTasks.map((t) => String(t._id))
+
+    const childTasks = await db
+      .collection(taskModel.TASK_COLLECTION_NAME)
+      .find({
+        cardId,
+        parentTaskId: { $in: parentIds }
+      })
+      .sort(childSort)
+      .toArray()
+
+    // 3. group child theo parent
+    const childMap = new Map()
+
+    for (const child of childTasks) {
+      const key = child.parentTaskId
+      if (!childMap.has(key)) childMap.set(key, [])
+      childMap.get(key).push(child)
+    }
+
+    // 4. attach vào root
+    const result = rootTasks.map((root) => ({
+      ...root,
+      childTasks: childMap.get(String(root._id)) || []
+    }))
+
+    return result
   }
 
   static findOne = async ({ filter, options = {} }) => {

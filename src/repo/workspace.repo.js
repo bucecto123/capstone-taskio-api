@@ -1,6 +1,7 @@
 import { workspaceModel } from '~/models/workspace.model'
 import { GET_DB } from '~/config/mongodb'
 import { workspaceMemberModel } from '~/models/workspaceMember.model'
+import { ObjectId } from 'mongodb'
 
 class WorkspaceRepo {
   static findOne = async ({ filter, options = {} }) => {
@@ -36,35 +37,29 @@ class WorkspaceRepo {
   }
 
   static fetchByUser = async ({ userId }) => {
-    return await GET_DB()
+    const db = GET_DB()
+
+    const activeMemberships = await db
+      .collection(workspaceMemberModel.WORKSPACE_MEMBER_COLLECTION_NAME)
+      .find({
+        userId,
+        status: 'active'
+      })
+      .project({ workspaceId: 1 })
+      .toArray()
+
+    if (!activeMemberships.length) return []
+
+    const workspaceObjectIds = activeMemberships
+      .map((member) => member.workspaceId)
+      .filter(Boolean)
+      .map((id) => new ObjectId(id))
+
+    return await db
       .collection(workspaceModel.WORKSPACE_COLLECTION_NAME)
-      .aggregate([
-        {
-          $lookup: {
-            from: workspaceMemberModel.WORKSPACE_MEMBER_COLLECTION_NAME,
-            let: { workspaceId: { $toString: '$_id' } },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $eq: ['$workspaceId', '$$workspaceId'] },
-                      { $eq: ['$userId', userId] },
-                      { $eq: ['$status', 'active'] }
-                    ]
-                  }
-                }
-              }
-            ],
-            as: 'members'
-          }
-        },
-        {
-          $match: {
-            members: { $ne: [] }
-          }
-        }
-      ])
+      .find({
+        _id: { $in: workspaceObjectIds }
+      })
       .toArray()
   }
 }

@@ -5,7 +5,10 @@ import WorkspaceController from '~/controllers/workspace.controller'
 import { workspaceMiddleware } from '~/middlewares/workspacePermission.middleware'
 import { WORKSPACE_PERMISSIONS } from '~/constant/workspacePermission.constant'
 import validate from '~/utils/validate'
-import { createIdParamSchema } from '~/validations/common.validation'
+import {
+  createIdParamSchema,
+  createWorkspaceExportParamSchema
+} from '~/validations/common.validation'
 import { workspaceMemberValidation } from '~/validations/workspaceMember.validation'
 
 const Router = express.Router()
@@ -71,6 +74,23 @@ Router.route('/members/:workspaceId/:memberId')
     ),
     asyncHandler(WorkspaceController.removeMember)
   )
+
+Router.route('/:workspaceId/exports')
+  .post(
+    asyncHandler(authMiddleware.isAuthorized),
+    asyncHandler(validate(createIdParamSchema('workspaceId'), 'params')),
+    asyncHandler(
+      workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.VIEW)
+    ),
+    asyncHandler(WorkspaceController.createExport)
+  )
+
+Router.route('/:workspaceId/exports/:exportId/download').get(
+  asyncHandler(authMiddleware.isAuthorized),
+  asyncHandler(validate(createWorkspaceExportParamSchema, 'params')),
+  asyncHandler(workspaceMiddleware.checkPermission(WORKSPACE_PERMISSIONS.VIEW)),
+  asyncHandler(WorkspaceController.downloadExport)
+)
 
 Router.route('/roles').post(
   asyncHandler(authMiddleware.isAuthorized),

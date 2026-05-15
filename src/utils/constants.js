@@ -1,6 +1,17 @@
 import { env } from '~/config/environment'
 // Những domain được phép truy cập tới tài nguyên của Server
-export const WHITELIST_DOMAINS = ['https://taskio.nigga.in.net']
+
+const CONFIGURED_CORS_DOMAINS = (env.CORS_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((domain) => domain.trim())
+  .filter(Boolean)
+
+export const WHITELIST_DOMAINS = [
+  'http://localhost:5173',
+  env.WEBSITE_DOMAIN_DEVELOPMENT,
+  env.WEBSITE_DOMAIN_PRODUCTION,
+  ...CONFIGURED_CORS_DOMAINS
+].filter(Boolean)
 
 export const visibility = {
   PUBLIC: 'public',

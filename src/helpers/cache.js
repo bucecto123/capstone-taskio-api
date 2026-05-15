@@ -1,4 +1,4 @@
-import { GET_REDIS } from '../providers/RedisProvider.js'
+import { GET_REDIS_CACHE } from '~/config/redisCache'
 
 const DEFAULT_TTL_IN_SECONDS = 120
 
@@ -14,7 +14,7 @@ const setCache = async ({
   value,
   ttlInSeconds = DEFAULT_TTL_IN_SECONDS
 }) => {
-  const redisClient = GET_REDIS()
+  const redisClient = GET_REDIS_CACHE()
 
   if (!key) throw new Error('Cache key is required.')
 
@@ -30,7 +30,7 @@ const setCache = async ({
 }
 
 const getCache = async ({ key }) => {
-  const redisClient = GET_REDIS()
+  const redisClient = GET_REDIS_CACHE()
 
   if (!key) throw new Error('Cache key is required.')
 
@@ -49,7 +49,7 @@ const getCacheJSON = async ({ key }) => {
 }
 
 const deleteCache = async ({ key }) => {
-  const redisClient = GET_REDIS()
+  const redisClient = GET_REDIS_CACHE()
 
   if (!key) throw new Error('Cache key is required.')
 
@@ -57,7 +57,7 @@ const deleteCache = async ({ key }) => {
 }
 
 const deleteManyCaches = async ({ keys = [] }) => {
-  const redisClient = GET_REDIS()
+  const redisClient = GET_REDIS_CACHE()
 
   if (!Array.isArray(keys) || keys.length === 0) return 0
 
@@ -68,7 +68,7 @@ const deleteManyCaches = async ({ keys = [] }) => {
 }
 
 const existsCache = async ({ key }) => {
-  const redisClient = GET_REDIS()
+  const redisClient = GET_REDIS_CACHE()
 
   if (!key) throw new Error('Cache key is required.')
 
@@ -77,7 +77,7 @@ const existsCache = async ({ key }) => {
 }
 
 const expireCache = async ({ key, ttlInSeconds = DEFAULT_TTL_IN_SECONDS }) => {
-  const redisClient = GET_REDIS()
+  const redisClient = GET_REDIS_CACHE()
 
   if (!key) throw new Error('Cache key is required.')
   if (!ttlInSeconds || ttlInSeconds <= 0) return false
@@ -111,7 +111,7 @@ const getOrSetCacheJSON = async ({
 }
 
 const scanKeysByPattern = async ({ pattern }) => {
-  const redisClient = GET_REDIS()
+  const redisClient = GET_REDIS_CACHE()
 
   if (!pattern) throw new Error('Pattern is required.')
 

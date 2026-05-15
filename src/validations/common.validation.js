@@ -19,9 +19,15 @@ const createIdParamSchema = (fieldName = '_id') =>
     [fieldName]: idSchema.required()
   })
 
+const createWorkspaceExportParamSchema = Joi.object({
+  workspaceId: idSchema.required(),
+  exportId: Joi.string().guid({ version: ['uuidv4'] }).required()
+})
+
 export {
   idSchema,
   optionalIdSchema,
   validateIdParamSchema,
-  createIdParamSchema
+  createIdParamSchema,
+  createWorkspaceExportParamSchema
 }

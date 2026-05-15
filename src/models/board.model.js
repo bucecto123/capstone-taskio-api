@@ -15,9 +15,9 @@ const BOARD_COVER_SCHEMA = Joi.object({
 
 const BOARD_COLLECTION_SCHEMA = Joi.object({
   workspaceId: Joi.string()
-      .pattern(OBJECT_ID_RULE)
-      .message(OBJECT_ID_RULE_MESSAGE)
-      .required(),
+    .pattern(OBJECT_ID_RULE)
+    .message(OBJECT_ID_RULE_MESSAGE)
+    .required(),
 
   title: Joi.string().required().min(1).max(200).trim().strict(),
 

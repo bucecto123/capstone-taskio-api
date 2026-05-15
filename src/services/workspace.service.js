@@ -11,8 +11,22 @@ import WorkspaceMemberRepo from '~/repo/workspaceMember.repo'
 import WorkspacePermissionRepo from '~/repo/workspacePermission.repo'
 import WorkspaceRoleRepo from '~/repo/workspaceRole.repo'
 import { mongoClientInstance } from '~/config/mongodb'
+import { GET_DB } from '~/config/mongodb'
 import BoardRepo from '~/repo/board.repo'
 import { getActiveSubscriptionCached } from '~/helpers/subscription.cache'
+import EfsExportProvider from '~/providers/EfsExportProvider'
+import { activityLogModel } from '~/models/activityLog.model'
+import { attachmentModel } from '~/models/cardAttachment.model'
+import { boardLabelModel } from '~/models/boardLabel.model'
+import { boardMemberModel } from '~/models/boardMember.model'
+import { boardModel } from '~/models/board.model'
+import { cardCommentModel } from '~/models/cardComment.model'
+import { cardModel } from '~/models/card.model'
+import { columnModel } from '~/models/column.model'
+import { subscriptionModel } from '~/models/subscription.model'
+import { taskModel } from '~/models/task.model'
+import { workspaceMemberModel } from '~/models/workspaceMember.model'
+import { workspaceRoleModel } from '~/models/workspaceRole.model'
 
 const generateWorkspaceAdminRole = ({ workspaceId }) => {
   return {
@@ -88,6 +102,139 @@ class WorkspaceService {
     const workspacePermissions = await WorkspacePermissionRepo.findMany({})
 
     return workspacePermissions
+  }
+
+  static createExport = async ({ workspaceAccess, userContext }) => {
+    const workspaceId = workspaceAccess.workspace._id.toString()
+    const db = GET_DB()
+
+    const workspace = await WorkspaceRepo.findOne({
+      filter: { _id: new ObjectId(workspaceId) }
+    })
+
+    if (!workspace) throw new NotFoundErrorResponse('Workspace not found.')
+
+    const boards = await db
+      .collection(boardModel.BOARD_COLLECTION_NAME)
+      .find({ workspaceId })
+      .toArray()
+
+    const boardIds = boards.map((board) => board._id.toString())
+
+    let columns = []
+    let cards = []
+    let boardMembers = []
+    let boardLabels = []
+    let activityLogs = []
+
+    if (boardIds.length) {
+      const boardExportData = await Promise.all([
+        db
+          .collection(columnModel.COLUMN_COLLECTION_NAME)
+          .find({ boardId: { $in: boardIds } })
+          .toArray(),
+        db
+          .collection(cardModel.CARD_COLLECTION_NAME)
+          .find({ boardId: { $in: boardIds } })
+          .toArray(),
+        db
+          .collection(boardMemberModel.BOARD_MEMBER_COLLECTION_NAME)
+          .find({ boardId: { $in: boardIds } })
+          .toArray(),
+        db
+          .collection(boardLabelModel.BOARD_LABEL_COLLECTION_NAME)
+          .find({ boardId: { $in: boardIds } })
+          .toArray(),
+        db
+          .collection(activityLogModel.ACTIVITY_LOG_COLLECTION_NAME)
+          .find({ boardId: { $in: boardIds } })
+          .toArray()
+      ])
+
+      columns = boardExportData[0]
+      cards = boardExportData[1]
+      boardMembers = boardExportData[2]
+      boardLabels = boardExportData[3]
+      activityLogs = boardExportData[4]
+    }
+
+    const cardIds = cards.map((card) => card._id.toString())
+
+    let tasks = []
+    let comments = []
+    let attachments = []
+
+    if (cardIds.length) {
+      const cardExportData = await Promise.all([
+        db
+          .collection(taskModel.TASK_COLLECTION_NAME)
+          .find({ cardId: { $in: cardIds } })
+          .toArray(),
+        db
+          .collection(cardCommentModel.CARD_COMMENT_COLLECTION_NAME)
+          .find({ cardId: { $in: cardIds } })
+          .toArray(),
+        db
+          .collection(attachmentModel.CARD_ATTACHMENT_NAME)
+          .find({ cardId: { $in: cardIds } })
+          .toArray()
+      ])
+
+      tasks = cardExportData[0]
+      comments = cardExportData[1]
+      attachments = cardExportData[2]
+    }
+
+    const [workspaceMembers, workspaceRoles, subscriptions] = await Promise.all([
+      db
+        .collection(workspaceMemberModel.WORKSPACE_MEMBER_COLLECTION_NAME)
+        .find({ workspaceId })
+        .toArray(),
+      db
+        .collection(workspaceRoleModel.WORKSPACE_ROLE_COLLECTION_NAME)
+        .find({ workspaceId })
+        .toArray(),
+      db
+        .collection(subscriptionModel.SUBSCRIPTION_COLLECTION_NAME)
+        .find({ workspaceId })
+        .toArray()
+    ])
+
+    const metadata = await EfsExportProvider.createWorkspaceExport({
+      workspaceId,
+      payload: {
+        exportedAt: new Date().toISOString(),
+        exportedBy: userContext._id.toString(),
+        workspace,
+        workspaceMembers,
+        workspaceRoles,
+        subscriptions,
+        boards,
+        boardMembers,
+        boardLabels,
+        columns,
+        cards,
+        tasks,
+        comments,
+        attachments,
+        activityLogs
+      }
+    })
+
+    return {
+      exportId: metadata.exportId,
+      fileName: metadata.fileName,
+      size: metadata.size,
+      createdAt: metadata.createdAt,
+      downloadPath: `/v1/workspaces/${workspaceId}/exports/${metadata.exportId}/download`
+    }
+  }
+
+  static getExport = async ({ workspaceAccess, exportId }) => {
+    return await EfsExportProvider.getWorkspaceExport({
+      workspaceId: workspaceAccess.workspace._id.toString(),
+      exportId
+    })
   }
 
   static create = async ({ userContext, data, session = null }) => {

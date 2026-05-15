@@ -36,22 +36,23 @@ class InvitationRepo {
       .collection(invitationModel.INVITATION_COLLECTION_NAME)
       .aggregate([
         { $match: { $and: queryConditions } },
+
         {
           $addFields: {
             entity_object_id: { $toObjectId: '$entityId' },
             inviter_object_id: { $toObjectId: '$inviterId' }
           }
         },
+
         {
           $lookup: {
             from: userModel.USER_COLLECTION_NAME,
             localField: 'inviter_object_id',
             foreignField: '_id',
-            as: 'inviter',
-            pipeline: [{ $project: { displayName: 1, avatar: 1 } }]
+            as: 'inviter'
           }
         },
-        // Convert entity_id string -> ObjectId trước khi lookup
+
         {
           $lookup: {
             from: boardModel.BOARD_COLLECTION_NAME,
@@ -60,6 +61,7 @@ class InvitationRepo {
             as: 'board'
           }
         },
+
         {
           $lookup: {
             from: workspaceModel.WORKSPACE_COLLECTION_NAME,
@@ -68,8 +70,10 @@ class InvitationRepo {
             as: 'workspace'
           }
         },
+
         {
           $addFields: {
+            inviter: { $arrayElemAt: ['$inviter', 0] },
             entityInfo: {
               $cond: {
                 if: { $eq: ['$entity', 'board'] },
@@ -79,6 +83,7 @@ class InvitationRepo {
             }
           }
         },
+
         {
           $project: {
             board: 0,
@@ -88,9 +93,18 @@ class InvitationRepo {
             inviteeId: 0,
             entityId: 0,
             updatedAt: 0,
-            inviter_object_id: 0
+            inviter_object_id: 0,
+
+            'inviter.email': 0,
+            'inviter.password': 0,
+            'inviter.createdAt': 0,
+            'inviter.updatedAt': 0,
+            'inviter.role': 0,
+            'inviter.isActive': 0,
+            'inviter.username': 0
           }
         },
+
         { $sort: { createdAt: -1 } }
       ])
       .toArray()

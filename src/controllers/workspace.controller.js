@@ -75,6 +75,24 @@ class WorkspaceController {
     }).send(res)
   }
 
+  static createExport = async (req, res) => {
+    new CreatedSuccessResponse({
+      metadata: await WorkspaceService.createExport({
+        workspaceAccess: req.workspaceAccess,
+        userContext: req.userContext
+      })
+    }).send(res)
+  }
+
+  static downloadExport = async (req, res) => {
+    const exportFile = await WorkspaceService.getExport({
+      workspaceAccess: req.workspaceAccess,
+      exportId: req.params.exportId
+    })
+
+    return res.download(exportFile.filePath, exportFile.fileName)
+  }
+
   static createRole = async (req, res) => {
     new CreatedSuccessResponse({
       metadata: await WorkspaceService.createRole({

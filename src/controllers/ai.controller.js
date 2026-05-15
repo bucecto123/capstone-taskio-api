@@ -1,4 +1,7 @@
-import { CreatedSuccessResponse, OkSuccessResponse } from '~/core/success.response'
+import {
+  CreatedSuccessResponse,
+  OkSuccessResponse
+} from '~/core/success.response'
 import AIService from '~/services/ai.service'
 
 class AIController {

@@ -12,6 +12,15 @@ Router.route('/')
     asyncHandler(AdminBackgroundController.createAdminBackground)
   )
 
+Router.route('/update/:_id').post(
+  asyncHandler(multerUploadMiddleware.uploadSingleImage),
+  asyncHandler(AdminBackgroundController.updateAdminBackground)
+)
+
+Router.route('/delete/:_id').delete(
+  asyncHandler(AdminBackgroundController.deleteAdminBackground)
+)
+
 Router.route('/block/:backgroundId').patch(
   asyncHandler(AdminBackgroundController.updateBlockBackground)
 )

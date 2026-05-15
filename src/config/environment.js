@@ -13,9 +13,12 @@ export const env = {
 
   WEBSITE_DOMAIN_DEVELOPMENT: process.env.WEBSITE_DOMAIN_DEVELOPMENT,
   WEBSITE_DOMAIN_PRODUCTION: process.env.WEBSITE_DOMAIN_PRODUCTION,
+  CORS_ALLOWED_ORIGINS: process.env.CORS_ALLOWED_ORIGINS,
 
   EMAIL_USERNAME: process.env.EMAIL_USERNAME,
   EMAIL_PASSWORD: process.env.EMAIL_PASSWORD,
+
+  API_KEY_MAIL: process.env.API_KEY_MAIL,
 
   ACCESS_TOKEN_SECRET_SIGNATURE: process.env.ACCESS_TOKEN_SECRET_SIGNATURE,
   ACCESS_TOKEN_LIFE: process.env.ACCESS_TOKEN_LIFE,
@@ -28,21 +31,24 @@ export const env = {
   CLOUDINARY_API_KEY: process.env.CLOUDINARY_API_KEY,
   CLOUDINARY_API_SECRET: process.env.CLOUDINARY_API_SECRET,
 
-  REDIS_HOST: process.env.REDIS_HOST,
-  REDIS_PORT: process.env.REDIS_PORT,
-  REDIS_PASSWORD: process.env.REDIS_PASSWORD,
-  REDIS_TLS: process.env.REDIS_TLS,
+  REDIS_CACHE_HOST: process.env.REDIS_CACHE_HOST,
+  REDIS_CACHE_PORT: process.env.REDIS_CACHE_PORT,
+  REDIS_CACHE_PASSWORD: process.env.REDIS_CACHE_PASSWORD,
+
+  REDIS_REALTIME_HOST: process.env.REDIS_REALTIME_HOST,
+  REDIS_REALTIME_PORT: process.env.REDIS_REALTIME_PORT,
+  REDIS_REALTIME_PASSWORD: process.env.REDIS_REALTIME_PASSWORD,
 
   // S3 credential
-  AWS_USER_ACCESS_KEY: process.env.AWS_USER_ACCESS_KEY,
-  AWS_USER_SECRET_ACCESS_KEY: process.env.AWS_USER_SECRET_ACCESS_KEY,
   AWS_REGION: process.env.AWS_REGION,
   AWS_S3_BUCKET: process.env.AWS_S3_BUCKET,
   AWS_CLOUDFRONT_DOMAIN: process.env.AWS_CLOUDFRONT_DOMAIN,
 
-  // Bedrock AI — dùng EC2 instance profile, không cần access key.
-  // Local dev muốn test: aws configure hoặc set AWS_PROFILE với credential
-  // có quyền bedrock:InvokeModel.
+  // Bedrock AI
+  BEDROCK_AWS_ACCESS_KEY_ID: process.env.BEDROCK_AWS_ACCESS_KEY_ID,
+  BEDROCK_AWS_SECRET_ACCESS_KEY: process.env.BEDROCK_AWS_SECRET_ACCESS_KEY,
   BEDROCK_REGION: process.env.BEDROCK_REGION || 'us-east-1',
-  BEDROCK_MODEL_ID: process.env.BEDROCK_MODEL_ID || 'us.anthropic.claude-haiku-4-5-20251001-v1:0'
+
+  // Shared EFS storage mounted on backend EC2 instances
+  EFS_EXPORT_ROOT: process.env.EFS_EXPORT_ROOT || '/mnt/taskio-shared/exports'
 }

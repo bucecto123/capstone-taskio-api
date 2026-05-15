@@ -17,6 +17,22 @@ class AdminBackgroundController {
     }).send(res)
   }
 
+  static updateAdminBackground = async (req, res) => {
+    const backgroundData = {
+      entity: req.body.entity,
+      title: req.body.title,
+      status: req.body.status,
+      file: req.file || req.body.image
+    }
+    const { _id } = req.params
+    new OkSuccessResponse({
+      metadata: await AdminBackgroundService.updateBackground({
+        _id: _id,
+        data: backgroundData
+      })
+    }).send(res)
+  }
+
   static getAdminBackgrounds = async (req, res) => {
     new OkSuccessResponse({
       metadata: await AdminBackgroundService.fetchBackgrounds({
@@ -30,6 +46,16 @@ class AdminBackgroundController {
     new OkSuccessResponse({
       metadata: await AdminBackgroundService.updateBlockBackground({
         backgroundId
+      })
+    }).send(res)
+  }
+
+  static deleteAdminBackground = async (req, res) => {
+    const { _id } = req.params
+
+    new OkSuccessResponse({
+      metadata: await AdminBackgroundService.deleteBlockBackground({
+        _id: _id
       })
     }).send(res)
   }
